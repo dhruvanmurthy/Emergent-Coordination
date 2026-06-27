@@ -1,6 +1,6 @@
 # Emergent coordination in multi-agent language models (ICLR'26)
 
-Official implementation of the paper
+This is a fork of Official implementation of the paper
 
 > Riedl, C. (2026). **Emergent coordination in multi-agent language models.**
 > *International Conference on Learning Representations*.
@@ -36,8 +36,8 @@ This project investigates how groups of AI agents can collectively solve problem
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/riedlc/AI-GBS.git
-cd AI-GBS
+git clone https://github.com/dhruvanmurthy/Emergent-Coordination.git
+cd Emergent-Coordination
 
 # Create virtual environment
 python3 -m venv venv
