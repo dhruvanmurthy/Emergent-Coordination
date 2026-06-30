@@ -556,3 +556,106 @@ Common CSV schema:
 5. run_experiment_multi_model.py
 6. persona_experiment.py
 7. context_artifacts.md for output schemas and file references
+
+## Operational Notes and Examples
+
+### Entry Points in This Repository
+
+The codebase has two useful definitions of entry points:
+
+1. Python main-guard entry points (3)
+- experiment.py
+- persona_experiment.py
+- run_experiment_multi_model.py
+
+2. Directly runnable scripts including top-level execution (7)
+- experiment.py
+- persona_experiment.py
+- run_experiment_multi_model.py
+- extract_game_data_to_csv.py
+- results_visualization.py
+- results_compresser.py
+- launch_experiments.sh
+
+### Running Experiments with OpenRouter Free Models
+
+The OpenRouter path is already implemented in llm_run.py via:
+- _resolve_provider_and_model
+- _build_client
+- _build_extra_headers_for_openrouter
+
+#### Required Environment Variables
+
+Example .env entries:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_HTTP_REFERER=https://github.com/your-org/your-repo
+OPENROUTER_APP_TITLE=Emergent-Coordination
+```
+
+Notes:
+- OPENROUTER_API_KEY is required for provider=openrouter calls.
+- OPENROUTER_HTTP_REFERER and OPENROUTER_APP_TITLE are optional but recommended.
+
+#### Model Routing Behavior in _resolve_provider_and_model
+
+Examples with expected routing:
+
+1. OpenAI direct
+- Input: openai/gpt-4o-mini
+- Output: provider=openai, model=gpt-4o-mini
+
+2. OpenAI implicit
+- Input: gpt-4o-mini
+- Output: provider=openai, model=gpt-4o-mini
+
+3. OpenRouter model (recommended format)
+- Input: meta-llama/llama-3.3-70b-instruct:free
+- Output: provider=openrouter, model=meta-llama/llama-3.3-70b-instruct:free
+
+4. OpenRouter model (another example)
+- Input: google/gemma-2-9b-it:free
+- Output: provider=openrouter, model=google/gemma-2-9b-it:free
+
+#### CLI Examples
+
+Run non-persona sweep with an OpenRouter free model:
+
+```bash
+python run_experiment_multi_model.py "meta-llama/llama-3.3-70b-instruct:free"
+```
+
+Run persona experiment with an OpenRouter free model:
+
+```bash
+python persona_experiment.py "google/gemma-2-9b-it:free"
+```
+
+#### Concurrency Tuning for Free-Tier Stability
+
+Free models often rate-limit aggressively. Recommended starting settings:
+
+1. run_experiment_multi_model.py
+- max_concurrent = 2 or 3
+- runs_per_config = small trial first (for example 3 to 5)
+
+2. persona_experiment.py
+- max_concurrent = 2 or 3
+- runs_per_config = small trial first
+
+3. Keep retry/fallback enabled
+- llm_run.chat already includes retry + exponential backoff + soft fallback.
+
+#### Optional Resolver Enhancement
+
+If you want explicit support for openrouter/<model> input style, add this case:
+
+```python
+if model.startswith("openrouter/"):
+  return "openrouter", model.split("/", 1)[1]
+```
+
+Example:
+- Input: openrouter/meta-llama/llama-3.3-70b-instruct:free
+- Output: provider=openrouter, model=meta-llama/llama-3.3-70b-instruct:free
