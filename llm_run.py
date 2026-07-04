@@ -7,16 +7,17 @@ from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 from openai import APIConnectionError, APITimeoutError, AsyncOpenAI, BadRequestError, RateLimitError
+from settings import get_optional, get_required
 
 
 load_dotenv()
 
 
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_TIMEOUT_SECONDS = 45.0
-DEFAULT_MAX_RETRIES = 5
-DEFAULT_BASE_DELAY_SECONDS = 1.0
-DEFAULT_FALLBACK_GUESS = 25
+OPENROUTER_BASE_URL = get_required("llm", "openrouter_base_url")
+DEFAULT_TIMEOUT_SECONDS = get_optional("llm", "default_timeout_seconds", 45.0)
+DEFAULT_MAX_RETRIES = get_optional("llm", "default_max_retries", 5)
+DEFAULT_BASE_DELAY_SECONDS = get_optional("llm", "default_base_delay_seconds", 1.0)
+DEFAULT_FALLBACK_GUESS = get_optional("llm", "default_fallback_guess", 25)
 
 
 @dataclass

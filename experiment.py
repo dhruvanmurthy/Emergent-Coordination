@@ -10,6 +10,7 @@ import asyncio
 import re
 import csv
 from prompt_capture import init_prompt_capture, capture_prompt, save_and_display_prompts
+from settings import get_required, require_keys
 
 # Custom exception for parsing failures
 class ParsingError(Exception):
@@ -180,7 +181,7 @@ class Agent:
         if hasattr(response, 'message'):
             # Ollama format
             return response.message.content
-        elif hasattr(response, 'choices'):
+        elif hasattr(response, 'choices') and len(response.choices) > 0:
             # OpenAI/OpenRouter format
             return response.choices[0].message.content
         else:
@@ -548,13 +549,21 @@ if __name__ == "__main__":
     import time
     
     async def main():
-        # Original sum experiment (like Roberts & Goldstone 2011)
-        print("Running SUM experiment...")
+        section = "single_run_experiment"
+        require_keys(section, ["num_agents", "model", "temperature", "mode"])
+        cfg = {
+            "num_agents": get_required(section, "num_agents"),
+            "model": get_required(section, "model"),
+            "temperature": get_required(section, "temperature"),
+            "mode": get_required(section, "mode"),
+        }
+
+        print("Running single experiment from settings.py...")
         await run_async_test(
-            num_agents=5,
-            model="gpt-4o-mini", 
-            temperature=1.9,
-            mode="sum"
+            num_agents=cfg["num_agents"],
+            model=cfg["model"],
+            temperature=cfg["temperature"],
+            mode=cfg["mode"],
         )
     
     total_start_time = time.time()
