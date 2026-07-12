@@ -340,7 +340,7 @@ def create_plots(results, base_path):
     print(f"  - plot6_convergence_by_agents.pdf (convergence trends with sample sizes)")
 
 # Usage - UPDATE THIS PATH
-base_path = "results/massive_experiment_meta-llama_llama-3.3-70b-instruct_20250703_221915"
+base_path = "results/massive_experiment_openrouter_free_20260704_163043"
 
 # Check if path exists
 if not os.path.exists(base_path):

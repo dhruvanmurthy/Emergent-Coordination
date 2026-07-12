@@ -13,7 +13,7 @@ SETTINGS: Dict[str, Any] = {
         # Retry attempts for transient API failures.
         "default_max_retries": 5,
         # Initial backoff delay before retrying a failed request.
-        "default_base_delay_seconds": 1.0,
+        "default_base_delay_seconds": 5.0,
         # Fallback numeric guess used when the model call fails.
         "default_fallback_guess": 25,
     },
@@ -28,15 +28,15 @@ SETTINGS: Dict[str, Any] = {
         # Maximum number of rounds per game.
         "max_rounds": 20,
         # Agent counts to sweep across.
-        "agents_list": [20],
+        "agents_list": [3],
         # Temperatures to sweep across.
-        "temp_list": [round(0.1 * i, 1) for i in range(0, 11)],
+        "temp_list": [round(0.1 * i, 1) for i in range(0, 6)],
         # Repetitions per (agents, temperature) configuration.
-        "runs_per_config": 50,
+        "runs_per_config": 5,
         # Number of configurations processed in one batch.
-        "batch_size": 20,
+        "batch_size": 10,
         # Maximum number of concurrent runs for the batch job.
-        "max_concurrent": 8,
+        "max_concurrent": 3,
         # Optional batch number to resume from; None starts fresh.
         "resume_from_batch": None,
         # Prefix used for generated result directories and files.
@@ -53,15 +53,15 @@ SETTINGS: Dict[str, Any] = {
         # Maximum rounds for each simulation.
         "max_rounds": 20,
         # Agent counts to sweep across.
-        "agents_list": [10],
+        "agents_list": [3],
         # Temperature used for the persona runs.
         "temp_list": [1.0],
         # Repetitions per configuration.
-        "runs_per_config": 50,
+        "runs_per_config": 5,
         # Configurations processed in one batch.
-        "batch_size": 20,
+        "batch_size": 10,
         # Maximum number of concurrent runs.
-        "max_concurrent": 8,
+        "max_concurrent": 3,
         # Optional batch number to resume from.
         "resume_from_batch": None,
         # Prefix used for generated experiment outputs.
