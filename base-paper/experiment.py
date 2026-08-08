@@ -129,17 +129,26 @@ class Agent:
             self._extract_last_number,
             self._extract_first_number, 
             self._extract_any_number,
-            lambda r, g: self._generate_fallback(g)
         ]
         
+        last_error = None
         for strategy in strategies:
             try:
                 return strategy(response, guess_range)
-            except ParsingError:
+            except ParsingError as exc:
+                last_error = exc
                 continue
-        
-        # If all strategies fail, use fallback
-        return self._generate_fallback(guess_range)
+
+        # Do not silently fallback here. Let caller mark parse failure and reuse guess.
+        content_preview = self._get_response_content(response)
+        content_preview = content_preview.replace("\n", " ").strip()
+        if len(content_preview) > 120:
+            content_preview = content_preview[:117] + "..."
+
+        raise ParsingError(
+            f"Agent {self.agent_id}: Could not parse a valid number from response. "
+            f"Content preview: {content_preview!r}. Last error: {last_error}"
+        )
     
     def _extract_last_number(self, response, guess_range: tuple) -> int:
         """Extract the last number from response"""
@@ -178,14 +187,41 @@ class Agent:
     
     def _get_response_content(self, response) -> str:
         """Extract content from different response formats"""
+        content = None
+
         if hasattr(response, 'message'):
-            # Ollama format
-            return response.message.content
+            # Ollama-style response object
+            content = getattr(response.message, 'content', None)
         elif hasattr(response, 'choices') and len(response.choices) > 0:
-            # OpenAI/OpenRouter format
-            return response.choices[0].message.content
-        else:
-            return str(response)
+            # OpenAI/OpenRouter-style response object
+            first_choice = response.choices[0]
+            message = getattr(first_choice, 'message', None)
+            content = getattr(message, 'content', None)
+
+        if content is None:
+            return ""
+
+        # Some providers return structured content blocks instead of a plain string.
+        if isinstance(content, list):
+            text_parts = []
+            for item in content:
+                if isinstance(item, str):
+                    text_parts.append(item)
+                elif isinstance(item, dict):
+                    maybe_text = item.get('text')
+                    if isinstance(maybe_text, str):
+                        text_parts.append(maybe_text)
+                else:
+                    # Handle SDK content-part objects with a .text attribute.
+                    maybe_text = getattr(item, 'text', None)
+                    if isinstance(maybe_text, str):
+                        text_parts.append(maybe_text)
+            return " ".join(text_parts)
+
+        if isinstance(content, str):
+            return content
+
+        return str(content)
 
 class GameMaster:
     """Orchestrates the number guessing game"""
@@ -350,44 +386,46 @@ class GameMaster:
                 print(f"Agent {agent.agent_id}: {guess} (🚨 API FAILED - using fallback)")
             
             # Save API response
-                try:
-                    response_id = f"api_r{round_num:02d}_a{agent.agent_id}"
-                    api_file = os.path.join(self.results_dir, f"raw_api_{response_id}.json")
-                    
-                    # Convert response to JSON-serializable format
-                    if hasattr(response, 'model_dump'):
-                        response_data = response.model_dump()
-                    elif hasattr(response, 'to_dict'):
-                        response_data = response.to_dict()
-                    else:
-                        # Manual conversion for OpenAI-style responses
-                        response_data = {
-                            "id": getattr(response, 'id', None),
-                            "object": getattr(response, 'object', None),
-                            "created": getattr(response, 'created', None),
-                            "model": getattr(response, 'model', None),
-                            "choices": [
-                                {
-                                    "index": choice.index if hasattr(choice, 'index') else i,
-                                    "message": {
-                                        "role": choice.message.role if hasattr(choice.message, 'role') else None,
-                                        "content": choice.message.content if hasattr(choice.message, 'content') else None
-                                    },
-                                    "finish_reason": getattr(choice, 'finish_reason', None)
-                                }
-                                for i, choice in enumerate(getattr(response, 'choices', []))
-                            ],
-                            "usage": getattr(response, 'usage', None).__dict__ if hasattr(getattr(response, 'usage', None), '__dict__') else None
-                        }
-                    
-                    with open(api_file, 'w') as f:
-                        json.dump(response_data, f, indent=2)
-                    
-                    api_response_ids[agent.agent_id] = response_id
-                    
-                except Exception as e:
-                    print(f"Warning: Could not save API response for agent {agent.agent_id}: {e}")
-        
+            try:
+                response_id = f"api_r{round_num:02d}_a{agent.agent_id}"
+                api_file = os.path.join(self.results_dir, f"raw_api_{response_id}.json")
+                
+                # Convert response to JSON-serializable format
+                if hasattr(response, 'model_dump'):
+                    response_data = response.model_dump()
+                elif hasattr(response, 'to_dict'):
+                    response_data = response.to_dict()
+                else:
+                    # Manual conversion for OpenAI-style responses
+                    response_data = {
+                        "id": getattr(response, 'id', None),
+                        "object": getattr(response, 'object', None),
+                        "created": getattr(response, 'created', None),
+                        "model": getattr(response, 'model', None),
+                        "choices": [
+                            {
+                                "index": choice.index if hasattr(choice, 'index') else i,
+                                "message": {
+                                    "role": choice.message.role if hasattr(choice.message, 'role') else None,
+                                    "content": choice.message.content if hasattr(choice.message, 'content') else None
+                                },
+                                "finish_reason": getattr(choice, 'finish_reason', None)
+                            }
+                            for i, choice in enumerate(getattr(response, 'choices', []))
+                        ],
+                        "usage": getattr(response, 'usage', None).__dict__ if hasattr(getattr(response, 'usage', None), '__dict__') else None,
+                        "is_fallback": getattr(response, 'is_fallback', False),
+                        "fallback_reason": getattr(response, 'fallback_reason', None)
+                    }
+                
+                with open(api_file, 'w') as f:
+                    json.dump(response_data, f, indent=2)
+                
+                api_response_ids[agent.agent_id] = response_id
+                
+            except Exception as e:
+                print(f"Warning: Could not save API response for agent {agent.agent_id}: {e}")
+
         # Calculate result based on mode
         if self.mode == "sum":
             total_sum = sum(guesses.values())
@@ -412,7 +450,7 @@ class GameMaster:
         
         print(f"Feedback: {feedback}")
 
-                # Generate feedback
+        # Generate feedback
         # difference = result_value - self.mystery_number
         # if difference == 0:
         #     feedback = "CORRECT! 🎯"
