@@ -152,7 +152,15 @@ async def _call_chat_completion(
         if extra_headers:
             kwargs["extra_headers"] = extra_headers
 
-    return await client.chat.completions.create(**kwargs)
+    try:
+        return await client.chat.completions.create(**kwargs)
+    except BadRequestError as exc:
+        # Some models require max_completion_tokens instead of max_tokens.
+        if "max_tokens" in str(exc) and "max_completion_tokens" in str(exc):
+            kwargs.pop("max_tokens")
+            kwargs["max_completion_tokens"] = max_tokens
+            return await client.chat.completions.create(**kwargs)
+        raise
 
 
 def _make_fallback_response(model: str, reason: str, fallback_guess: int = DEFAULT_FALLBACK_GUESS) -> FallbackResponse:

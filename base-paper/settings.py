@@ -20,7 +20,7 @@ SETTINGS: Dict[str, Any] = {
     # Large multi-model sweep configuration used by run_experiment_multi_model.py.
     "run_experiment_multi_model": {
         # Models to evaluate in the batch experiment.
-        "models": ["openrouter/free"],
+        "models": ["openai/gpt-5-mini"],
         # Client type expected by the runner.
         "client_type": "openai",
         # Aggregation strategy for the game result.
@@ -45,7 +45,7 @@ SETTINGS: Dict[str, Any] = {
     # Persona-based experiment settings used by persona_experiment.py.
     "persona_experiment": {
         # Models to evaluate in the persona experiment.
-        "models": ["openrouter/free"],
+        "models": ["openai/gpt-5-mini"],
         # Client type expected by the runner.
         "client_type": "openai",
         # Aggregation strategy for the game.
@@ -78,9 +78,9 @@ SETTINGS: Dict[str, Any] = {
         # Number of agents in the sample run.
         "num_agents": 5,
         # Model used for the demo game.
-        "model": "openrouter/free",
+        "model": "openai/gpt-5-mini",
         # Temperature for the single run.
-        "temperature": 1.9,
+        "temperature": 1,
         # Aggregation strategy for the sample game.
         "mode": "sum",
     },
