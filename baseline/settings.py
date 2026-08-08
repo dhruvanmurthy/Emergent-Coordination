@@ -4,90 +4,89 @@ from typing import Any, Dict, Iterable
 # Centralized runtime configuration for the experiment scripts.
 # These comments preserve the intent of the earlier inline defaults.
 SETTINGS: Dict[str, Any] = {
-    # Shared LLM client settings used by the chat wrapper and experiment runners.
-    "llm": {
-        # OpenRouter endpoint for OpenAI-compatible model routing.
-        "openrouter_base_url": "https://openrouter.ai/api/v1",
-        # Default timeout for chat completion requests.
-        "default_timeout_seconds": 45.0,
-        # Retry attempts for transient API failures.
-        "default_max_retries": 5,
-        # Initial backoff delay before retrying a failed request.
-        "default_base_delay_seconds": 5.0,
-        # Fallback numeric guess used when the model call fails.
-        "default_fallback_guess": 25,
-        # Azure OpenAI API version used when provider is azureai.
-        # Required env vars: AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT.
-        # AZURE_AI_PROJECT_ENDPOINT is available in Foundry portal but is not
-        # used by the AsyncAzureOpenAI client; it is for the azure-ai-projects SDK.
-        "azure_openai_api_version": "2025-01-01-preview",
-    },
     # Large multi-model sweep configuration used by run_experiment_multi_model.py.
     "run_experiment_multi_model": {
-        # Models to evaluate in the batch experiment.
+        # Primary controlled environment used by the batch runner.
+        "environment": "synthetic_bugfix",
+        # Models retained as metadata so later LLM-backed baselines can share the same runner.
         "models": ["azureai/gpt-5-mini"],
-        # Client type expected by the runner.
-        "client_type": "azureai",
-        # Aggregation strategy for the game result.
-        "mode": "sum",
-        # Maximum number of rounds per game.
-        "max_rounds": 20,
-        # Agent counts to sweep across.
-        "agents_list": [3],
-        # Temperatures to sweep across.
-        "temp_list": [round(0.1 * i, 1) for i in range(0, 6)],
-        # Repetitions per (agents, temperature) configuration.
-        "runs_per_config": 5,
-        # Number of configurations processed in one batch.
-        "batch_size": 10,
-        # Maximum number of concurrent runs for the batch job.
-        "max_concurrent": 3,
-        # Optional batch number to resume from; None starts fresh.
-        "resume_from_batch": None,
+        # Baseline policies included in the pilot.
+        "baselines": [
+            "single_agent",
+            "random_policy",
+            "independent_multi_agent",
+            "prompted_coordination",
+        ],
+        # Primary multi-agent setting. Single-agent runs override this to one agent.
+        "num_agents": 2,
+        # Step budget for each episode.
+        "step_budget": 12,
+        # Deterministic pilot seeds. Expand this list for the full 200-400 episode pilot.
+        "episode_seeds": list(range(200, 220)),
+        # Number of episodes processed in one progress batch.
+        "batch_size": 20,
         # Prefix used for generated result directories and files.
-        "results_prefix": "massive_experiment",
-    },
-    # Persona-based experiment settings used by persona_experiment.py.
-    "persona_experiment": {
-        # Models to evaluate in the persona experiment.
-        "models": ["azureai/gpt-5-mini"],
-        # Client type expected by the runner.
-        "client_type": "azureai",
-        # Aggregation strategy for the game.
-        "mode": "sum",
-        # Maximum rounds for each simulation.
-        "max_rounds": 20,
-        # Agent counts to sweep across.
-        "agents_list": [3],
-        # Temperature used for the persona runs.
-        "temp_list": [1.0],
-        # Repetitions per configuration.
-        "runs_per_config": 5,
-        # Configurations processed in one batch.
-        "batch_size": 10,
-        # Maximum number of concurrent runs.
-        "max_concurrent": 3,
-        # Optional batch number to resume from.
-        "resume_from_batch": None,
-        # Prefix used for generated experiment outputs.
-        "results_prefix": "persona+reasoning_experiment",
-        # Distinguishes this run as a persona experiment.
-        "experiment_type": "persona_experiment",
-        # File containing the persona prompts.
-        "persona_file": "personas_gpt41.txt",
-        # Max token budget used for persona-enhanced agent replies.
-        "persona_agent_max_tokens": 200,
+        "results_prefix": "tool_use_pilot",
     },
     # Minimal single-run example configuration.
     "single_run_experiment": {
-        # Number of agents in the sample run.
-        "num_agents": 5,
-        # Model used for the demo game.
-        "model": "azureai/gpt-5-mini",
-        # Temperature for the single run.
-        "temperature": 1,
-        # Aggregation strategy for the sample game.
-        "mode": "sum",
+        # Primary controlled environment used by the main entrypoint.
+        "environment": "synthetic_bugfix",
+        # Number of agents in the pilot single-run demo.
+        "num_agents": 2,
+        # Deterministic seed for fixture selection and replay.
+        "seed": 17,
+        # Episode-level step budget.
+        "step_budget": 12,
+        # Root folder for canonical event logs.
+        "results_root": "results",
+    },
+    # Controlled tool-use environment contract.
+    "tool_use_environment": {
+        # Primary task family for the pilot.
+        "task_family": "synthetic_bugfix",
+        # Fixed-fixture pilot range. Generated variants remain deferred.
+        "template_count": 8,
+        "variants_per_template": 2,
+        # Primary outcome variable.
+        "outcome_space": ["success", "partial", "failure"],
+        # Externally visible environment states.
+        "progress_states": [
+            "not_started",
+            "in_progress",
+            "completed_success",
+            "completed_partial",
+            "completed_failure",
+        ],
+        # Minimal tool set used in the pilot.
+        "allowed_tools": [
+            "retrieve_file",
+            "search_symbol",
+            "run_tests",
+            "apply_patch",
+            "finalize_ticket",
+        ],
+        # Invalid-call taxonomy used for reporting.
+        "invalid_reason_classes": [
+            "schema_invalid",
+            "reference_invalid",
+            "state_invalid",
+            "semantic_noop",
+            "budget_invalid",
+        ],
+    },
+    # Count-based categorical MI estimator configuration for the pilot.
+    "coordination_metrics": {
+        # Primary estimator used for the first pilot runs.
+        "estimator": "plugin",
+        # Sensitivity analysis over Laplace / Dirichlet-style smoothing.
+        "smoothing_alphas": [0.0, 0.5, 1.0],
+        # Bootstrap iterations for confidence intervals.
+        "bootstrap_iterations": 500,
+        # Permutation-null iterations for significance checks.
+        "permutation_iterations": 250,
+        # Confidence level for bootstrap intervals.
+        "confidence_level": 0.95,
     },
 }
 
