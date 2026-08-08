@@ -82,7 +82,7 @@ def save_aggregate_summary(batch_folder, progress):
 
 
 def load_runner_settings():
-    section = "run_experiment_multi_model"
+    section = "baseline_sweep"
     require_keys(
         section,
         [
@@ -100,9 +100,9 @@ def load_runner_settings():
     models = get_required(section, "models")
     baselines = get_required(section, "baselines")
     if not isinstance(models, list) or not models:
-        raise ValueError("run_experiment_multi_model.models must be a non-empty list")
+        raise ValueError("baseline_sweep.models must be a non-empty list")
     if not isinstance(baselines, list) or not baselines:
-        raise ValueError("run_experiment_multi_model.baselines must be a non-empty list")
+        raise ValueError("baseline_sweep.baselines must be a non-empty list")
     unknown = sorted(set(baselines) - VALID_BASELINES)
     if unknown:
         raise ValueError(f"Unknown baselines in settings: {unknown}")

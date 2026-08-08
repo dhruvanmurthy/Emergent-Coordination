@@ -43,12 +43,11 @@ Migrate the repo from scalar guessing to a controlled, automatically-checkable t
 
 **Relevant files**
 - c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/experiment.py — replace scalar game loop with the new environment entrypoint.
-- c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/run_experiment_multi_model.py — current batch orchestrator; adapt for baseline/policy sweeps.
-- c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/persona_experiment.py — defer until after the core controlled-environment pilot is stable.
+- c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/run_baseline_sweep.py — current batch orchestrator for baseline/policy sweeps.
 - c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/llm_run.py — removed from the active repository surface during controlled-pilot cleanup.
 - c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/settings.py — central place for new experiment contracts, seeds, dataset size, and estimator toggles.
 - c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/results_visualization.py — replace scalar convergence plots with MI, reliability, and correlation dashboards.
-- c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/extract_game_data_to_csv.py — replace log regex parsing with schema-native trajectory extraction.
+- c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/export_trajectory_data.py — schema-native trajectory extraction and table export.
 - c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/context.md — update repository narrative to reflect tool-use environment and coordination metrics.
 - c:/Code/dhruvanmurthy/Emergent-Coordination/baseline/context_methods.md — update method documentation for new environment, abstraction, and estimators.
 

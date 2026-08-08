@@ -11,18 +11,15 @@ Core research question: estimate $I(A_1, A_2; Y)$ for categorical agent traces a
 - experiment.py
 - tool_use_environment.py
 - tool_use_baselines.py
-- run_experiment_multi_model.py
+- run_baseline_sweep.py
 
 2. Analysis and reporting
 - coordination_metrics.py
 - coordination_analysis.py
-- extract_game_data_to_csv.py
+- export_trajectory_data.py
 - results_visualization.py
 
-3. Deferred surfaces
-- persona_experiment.py
-
-4. Configuration and docs
+3. Configuration and docs
 - settings.py
 - validation.md
 - README.md
@@ -32,7 +29,7 @@ Core research question: estimate $I(A_1, A_2; Y)$ for categorical agent traces a
 
 1. `experiment.py` runs one deterministic demo episode.
 
-2. `run_experiment_multi_model.py` executes baseline sweeps across fixed seeds.
+2. `run_baseline_sweep.py` executes baseline sweeps across fixed seeds.
 
 3. `ToolUseBugfixEnvironment` validates tool calls and writes canonical artifacts.
 - `episode.jsonl`
@@ -40,7 +37,7 @@ Core research question: estimate $I(A_1, A_2; Y)$ for categorical agent traces a
 - `task_fixture.json`
 
 4. Offline scripts consume those canonical artifacts directly.
-- `extract_game_data_to_csv.py` exports row-oriented event and summary tables
+- `export_trajectory_data.py` exports row-oriented event and summary tables
 - `coordination_analysis.py` computes MI-ready baseline summaries
 - `results_visualization.py` renders dashboards from the coordination report
 
@@ -71,6 +68,4 @@ Core research question: estimate $I(A_1, A_2; Y)$ for categorical agent traces a
 
 1. The scalar guessing workflow is retired from the mainline implementation.
 
-2. Persona-conditioned experiments are intentionally deferred during the pilot.
-
-3. Execution-time validations still pending are tracked in `validation.md`.
+2. Execution-time validations still pending are tracked in `validation.md`.

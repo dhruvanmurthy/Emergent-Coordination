@@ -58,7 +58,7 @@ This file documents the active controlled tool-use pipeline.
 3. `summarize_coordination(base_dir)`
 - Aggregates baseline-level MI, reliability, efficiency, bootstrap, and permutation-null summaries.
 
-## extract_game_data_to_csv.py
+## export_trajectory_data.py
 
 1. `collect_trajectory_rows(base_dir)`
 - Converts canonical episode artifacts into row-oriented event and summary tables.
@@ -93,12 +93,7 @@ This file documents the active controlled tool-use pipeline.
 1. `main()`
 - Runs a single deterministic controlled bugfix episode from `settings.py`.
 
-## run_experiment_multi_model.py
+## run_baseline_sweep.py
 
 1. `main()`
 - Runs the baseline sweep over deterministic seeds and writes per-episode artifacts plus aggregate summaries.
-
-## persona_experiment.py
-
-1. `main()`
-- Intentionally raises a deferred-scope error during the pilot.

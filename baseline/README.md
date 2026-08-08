@@ -15,15 +15,15 @@ This repository now runs a controlled tool-use coordination study instead of the
 ```bash
 pip install -r requirements.txt
 python experiment.py
-python run_experiment_multi_model.py
-python extract_game_data_to_csv.py --base-dir results --output-dir results/exports
+python run_baseline_sweep.py
+python export_trajectory_data.py --base-dir results --output-dir results/exports
 python results_visualization.py --base-dir results --output-dir results/plots
 ```
 
 ## Core Pipeline
 
 1. `experiment.py` runs a deterministic demo episode from `settings.py`.
-2. `run_experiment_multi_model.py` sweeps baseline policies over fixed seeds.
+2. `run_baseline_sweep.py` sweeps baseline policies over fixed seeds.
 3. `tool_use_environment.py` validates each tool call and emits canonical event logs.
 4. `coordination_analysis.py` aggregates episode traces into MI-ready categorical records.
 5. `results_visualization.py` produces coordination, reliability, and efficiency dashboards.
@@ -63,7 +63,6 @@ results/exports/
 ## Notes
 
 - The scalar-game workflow is retired from the active code path.
-- Persona-conditioned experiments are intentionally deferred until the controlled environment and MI sanity suite are validated.
 - Pending execution-time validations are tracked in `validation.md`.
 
 

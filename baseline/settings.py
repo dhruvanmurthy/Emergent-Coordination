@@ -4,8 +4,8 @@ from typing import Any, Dict, Iterable
 # Centralized runtime configuration for the experiment scripts.
 # These comments preserve the intent of the earlier inline defaults.
 SETTINGS: Dict[str, Any] = {
-    # Large multi-model sweep configuration used by run_experiment_multi_model.py.
-    "run_experiment_multi_model": {
+    # Large baseline sweep configuration used by run_baseline_sweep.py.
+    "baseline_sweep": {
         # Primary controlled environment used by the batch runner.
         "environment": "synthetic_bugfix",
         # Models retained as metadata so later LLM-backed baselines can share the same runner.
