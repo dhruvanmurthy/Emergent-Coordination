@@ -33,11 +33,13 @@ python results_visualization.py --base-dir results --output-dir results/plots
 Per-episode artifacts:
 
 ```text
-results/tool_use_run_TEMPLATE_VARIANT_TIMESTAMP/
+results/tool_use_run_TEMPLATE_VARIANT_LABEL_TIMESTAMP/
 ├── episode.jsonl
 ├── summary.json
 └── task_fixture.json
 ```
+
+For sweep runs, `LABEL` contains the baseline and seed, which keeps repeated runs for the same fixture separate.
 
 Batch artifacts:
 
@@ -63,6 +65,8 @@ results/exports/
 ## Notes
 
 - The scalar-game workflow is retired from the active code path.
-- Pending execution-time validations are tracked in `validation.md`.
+- Sweep episode directories include the baseline and seed so repeated fixture selections are not overwritten.
+- The current 80-episode run is a pipeline-validation pilot, not a final research result. Scripted baselines have constant success outcomes, and random-policy traces are high-cardinality.
+- Pending execution-time and research-validity checks are tracked in `validation.md`.
 
 

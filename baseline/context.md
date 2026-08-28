@@ -68,4 +68,10 @@ Core research question: estimate $I(A_1, A_2; Y)$ for categorical agent traces a
 
 1. The scalar guessing workflow is retired from the mainline implementation.
 
-2. Execution-time validations still pending are tracked in `validation.md`.
+2. The pipeline has been validated on an 80-episode sweep: all episode directories were retained, 558 events were exported, and the coordination report and dashboards were generated.
+
+3. The current MI output is diagnostic rather than publishable: scripted baselines have constant success outcomes, while random-policy full traces have nearly one unique joint trace per episode. Coarsened trace features and MI sanity checks are still required.
+
+4. Single-agent episodes are a reference condition and should not be interpreted as a two-agent mutual-information comparison.
+
+5. Remaining execution-time and research-validity checks are tracked in `validation.md`.

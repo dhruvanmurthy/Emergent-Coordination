@@ -2,11 +2,15 @@
 
 Migrate the repo from scalar guessing to a controlled, automatically-checkable tool-use environment centered on a synthetic bugfix workflow, then measure coordination using categorical mutual information with robust sanity checks. Treat this as a clean break: retire the scalar-game architecture early and make the new tool-use pipeline the primary system rather than a compatibility layer.
 
+## Current Status
+
+The controlled environment, baseline policies, artifact persistence, trajectory export, coordination report, and dashboard pipeline have been implemented and validated on an 80-episode pipeline-validation run. The research pilot remains deferred until lower-cardinality trace features and MI sanity checks are complete. The next pilot target is 200-400 episodes total, with at least 50 episodes per major baseline cell.
+
 **Steps**
 1. Phase 0: Scope lock and hard cutover contract.
 2. Finalize the task contract for the synthetic bugfix environment: episode inputs, allowed tools, action argument schemas, progress-state transitions, and terminal outcomes (success, partial, failure).
 3. Declare the scalar-game scripts deprecated and stop designing for backward compatibility.
-4. Define the pilot contract: 100-300 episodes, 2-agent primary setting, OpenAI model baseline, and random-seed strategy.
+4. Define the pilot contract: 200-400 episodes, 2-agent primary setting, OpenAI model baseline, and random-seed strategy.
 5. Phase 1: Controlled Tool-Use Environment.
 6. Implement a Tool-GBS-style environment object with deterministic state transitions and automatic progress checks.
 7. Implement tool schemas for retrieve_file, search_symbol, run_tests, apply_patch, finalize_ticket with strict argument validation and explicit invalid-call reasons.
@@ -57,7 +61,7 @@ Migrate the repo from scalar guessing to a controlled, automatically-checkable t
 3. Abstraction invariants: every tool event maps to exactly one category; category coverage reports for full pilot dataset.
 4. Rater reliability: compute and review kappa plus disagreement matrix on stratified sample.
 5. MI sanity suite passes expected directional behaviors under random, shuffled, duplicated, and complementary conditions.
-6. End-to-end pilot run (100-300 episodes) reproduces from fixed seeds with stable MI confidence intervals.
+6. End-to-end pilot run (200-400 episodes) reproduces from fixed seeds with stable MI confidence intervals.
 
 **Decisions**
 - Included scope: synthetic bugfix workflow first, 2-agent primary analysis, all four baselines, ternary outcome Y, JSONL+Parquet storage, bootstrap CIs.

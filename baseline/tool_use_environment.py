@@ -979,11 +979,14 @@ def persist_episode_run(
     output_root: str,
     environment: ToolUseBugfixEnvironment,
     events: Sequence[ToolEvent],
+    run_label: Optional[str] = None,
+    summary: Optional[Dict[str, Any]] = None,
 ) -> str:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    label_suffix = f"_{run_label}" if run_label else ""
     run_dir = os.path.join(
         output_root,
-        f"tool_use_run_{environment.variant.template_id}_{environment.variant.variant_id}_{timestamp}",
+        f"tool_use_run_{environment.variant.template_id}_{environment.variant.variant_id}{label_suffix}_{timestamp}",
     )
     os.makedirs(run_dir, exist_ok=True)
 
@@ -993,7 +996,7 @@ def persist_episode_run(
             handle.write(json.dumps(event.to_dict()) + "\n")
 
     with open(os.path.join(run_dir, "summary.json"), "w", encoding="utf-8") as handle:
-        json.dump(environment.summarize_episode(events), handle, indent=2)
+        json.dump(summary or environment.summarize_episode(events), handle, indent=2)
 
     with open(os.path.join(run_dir, "task_fixture.json"), "w", encoding="utf-8") as handle:
         json.dump(asdict(environment.variant), handle, indent=2)

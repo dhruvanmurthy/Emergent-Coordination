@@ -20,7 +20,7 @@ This file documents the active controlled tool-use pipeline.
 - Produces episode-level outcome and reliability summaries.
 
 6. `persist_episode_run(...)`
-- Writes `episode.jsonl`, `summary.json`, and `task_fixture.json`.
+- Writes `episode.jsonl`, `summary.json`, and `task_fixture.json`. Sweep callers provide a baseline-and-seed label to avoid overwriting repeated fixture runs and persist the enriched baseline summary.
 
 ## tool_use_baselines.py
 
@@ -47,6 +47,9 @@ This file documents the active controlled tool-use pipeline.
 4. `permutation_null_distribution(...)`
 - Estimates a null distribution by shuffling outcomes and computes a permutation p-value.
 
+Current interpretation constraint:
+- Full action traces are currently used as categorical MI inputs. The pilot showed high trace cardinality and constant outcomes for scripted baselines, so MI conclusions are deferred until coarsened features and sanity checks are added.
+
 ## coordination_analysis.py
 
 1. `collect_episode_records(base_dir)`
@@ -57,6 +60,7 @@ This file documents the active controlled tool-use pipeline.
 
 3. `summarize_coordination(base_dir)`
 - Aggregates baseline-level MI, reliability, efficiency, bootstrap, and permutation-null summaries.
+- Single-agent episodes currently fill the second MI source from the first agent and should therefore be treated as a separate reference condition, not as an equivalent two-agent comparison.
 
 ## export_trajectory_data.py
 

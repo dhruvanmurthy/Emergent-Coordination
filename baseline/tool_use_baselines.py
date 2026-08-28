@@ -36,6 +36,19 @@ class PolicyAction:
     arguments: Dict[str, Any]
 
 
+def _freeze_arguments(arguments: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
+    def freeze_value(value: Any) -> Any:
+        if isinstance(value, dict):
+            return tuple(sorted((key, freeze_value(item)) for key, item in value.items()))
+        if isinstance(value, (list, tuple)):
+            return tuple(freeze_value(item) for item in value)
+        if isinstance(value, set):
+            return tuple(sorted(freeze_value(item) for item in value))
+        return value
+
+    return tuple(sorted((key, freeze_value(value)) for key, value in arguments.items()))
+
+
 class BasePolicyAdapter:
     def __init__(self, *, seed: int, num_agents: int):
         self.seed = seed
@@ -126,7 +139,7 @@ class IndependentMultiAgentPolicy(BasePolicyAdapter):
             return None
 
         available_keys = {
-            (action["tool_name"], self._freeze_arguments(action["arguments"])) for action in available
+            (action["tool_name"], _freeze_arguments(action["arguments"])) for action in available
         }
 
         for _ in range(max(environment.num_agents, 1)):
@@ -138,7 +151,7 @@ class IndependentMultiAgentPolicy(BasePolicyAdapter):
                 candidate = plan[offset]
                 self.agent_offsets[agent_id] = offset + 1
                 offset += 1
-                candidate_key = (candidate.tool_name, self._freeze_arguments(candidate.arguments))
+                candidate_key = (candidate.tool_name, _freeze_arguments(candidate.arguments))
                 if candidate_key in available_keys:
                     return candidate
 
@@ -178,10 +191,6 @@ class IndependentMultiAgentPolicy(BasePolicyAdapter):
 
         return plans
 
-    def _freeze_arguments(self, arguments: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
-        return tuple(sorted(arguments.items()))
-
-
 class PromptedCoordinationPolicy(BasePolicyAdapter):
     def __init__(self, *, seed: int, num_agents: int):
         super().__init__(seed=seed, num_agents=num_agents)
@@ -200,20 +209,16 @@ class PromptedCoordinationPolicy(BasePolicyAdapter):
             return None
 
         available_keys = {
-            (action["tool_name"], self._freeze_arguments(action["arguments"])) for action in available
+            (action["tool_name"], _freeze_arguments(action["arguments"])) for action in available
         }
         while self.plan_index < len(self.shared_plan):
             candidate = self.shared_plan[self.plan_index]
             self.plan_index += 1
-            candidate_key = (candidate.tool_name, self._freeze_arguments(candidate.arguments))
+            candidate_key = (candidate.tool_name, _freeze_arguments(candidate.arguments))
             if candidate_key in available_keys:
                 return candidate
 
         return self._fallback_action(environment, preferred_agent_id=0)
-
-    def _freeze_arguments(self, arguments: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
-        return tuple(sorted(arguments.items()))
-
 
 def build_policy_adapter(baseline_name: str, *, seed: int, num_agents: int) -> BasePolicyAdapter:
     if baseline_name == BASELINE_SINGLE_AGENT:

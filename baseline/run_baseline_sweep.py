@@ -127,16 +127,18 @@ def run_single_episode(baseline_name, seed, batch_folder, model_name, num_agents
         step_budget=step_budget,
         num_agents=num_agents,
     )
-    run_dir = persist_episode_run(
-        output_root=os.path.join(batch_folder, "episodes"),
-        environment=environment,
-        events=events,
-    )
     summary = summarize_baseline_episode(
         baseline_name=baseline_name,
         environment=environment,
         events=events,
         model_name=model_name,
+    )
+    run_dir = persist_episode_run(
+        output_root=os.path.join(batch_folder, "episodes"),
+        environment=environment,
+        events=events,
+        run_label=f"{baseline_name}_seed_{seed}",
+        summary=summary,
     )
     summary.update(
         {
