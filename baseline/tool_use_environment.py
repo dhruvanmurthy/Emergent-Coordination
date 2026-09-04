@@ -138,9 +138,13 @@ def _build_task_variant(
     primary_new: str,
     helper_old: str,
     helper_new: str,
+    tertiary_symbol: Optional[str] = None,
+    tertiary_old: Optional[str] = None,
+    tertiary_new: Optional[str] = None,
 ) -> BugfixTaskVariant:
     primary_defect = f"{template_id}.{variant_id}.primary"
     helper_defect = f"{template_id}.{variant_id}.helper"
+    tertiary_defect = f"{template_id}.{variant_id}.tertiary"
     primary_line = 2
     helper_line = 5
     source_content = "\n".join(
@@ -153,6 +157,16 @@ def _build_task_variant(
             "",
         ]
     )
+    if any(value is not None for value in (tertiary_symbol, tertiary_old, tertiary_new)):
+        if not all(value is not None for value in (tertiary_symbol, tertiary_old, tertiary_new)):
+            raise ValueError("tertiary defect fields must be provided together")
+        source_content += "\n".join(
+            [
+                f"def {tertiary_symbol}(items):",
+                f"    {tertiary_old}",
+                "",
+            ]
+        )
     test_path = f"tests/test_{template_id}_{variant_id}.py"
     test_content = "\n".join(
         [
@@ -185,6 +199,25 @@ def _build_task_variant(
         fixes_defects=(helper_defect,),
         description="Fix the helper defect for the variant.",
     )
+    patches = [primary_patch, helper_patch]
+    symbols = {
+        primary_symbol: [{"path": source_path, "line": primary_line}],
+        helper_symbol: [{"path": source_path, "line": helper_line}],
+    }
+    full_defects = [primary_defect, helper_defect]
+    if tertiary_symbol is not None:
+        tertiary_patch = PatchSpec(
+            patch_id=f"{template_id}:{variant_id}:tertiary",
+            patch=_build_patch(source_path, tertiary_old or "", tertiary_new or ""),
+            file_path=source_path,
+            old_text=tertiary_old or "",
+            new_text=tertiary_new or "",
+            fixes_defects=(tertiary_defect,),
+            description="Fix the tertiary defect for the variant.",
+        )
+        patches.append(tertiary_patch)
+        symbols[tertiary_symbol] = [{"path": source_path, "line": 8}]
+        full_defects.append(tertiary_defect)
 
     return BugfixTaskVariant(
         template_id=template_id,
@@ -192,11 +225,8 @@ def _build_task_variant(
         title=title,
         description=description,
         files={source_path: source_content, test_path: test_content},
-        symbols={
-            primary_symbol: [{"path": source_path, "line": primary_line}],
-            helper_symbol: [{"path": source_path, "line": helper_line}],
-        },
-        patches=(primary_patch, helper_patch),
+        symbols=symbols,
+        patches=tuple(patches),
         test_targets=(
             TestTargetSpec(
                 name=f"{test_path}::targeted",
@@ -205,11 +235,11 @@ def _build_task_variant(
             ),
             TestTargetSpec(
                 name=f"{test_path}::full",
-                checks_defects=(primary_defect, helper_defect),
+                checks_defects=tuple(full_defects),
                 description="Checks the full ticket and regression guards.",
             ),
         ),
-        required_defects=(primary_defect, helper_defect),
+        required_defects=tuple(full_defects),
     )
 
 
@@ -357,6 +387,9 @@ def build_bugfix_task_fixtures() -> List[BugfixTaskVariant]:
                     "primary_new": "return sum(value)",
                     "helper_old": "return items * -1",
                     "helper_new": "return abs(items)",
+                    "tertiary_symbol": "validate_currency",
+                    "tertiary_old": "return False",
+                    "tertiary_new": "return items in {'USD', 'EUR'}",
                 },
             ],
         },
@@ -386,6 +419,9 @@ def build_bugfix_task_fixtures() -> List[BugfixTaskVariant]:
                     "primary_new": "return value",
                     "helper_old": "return items + items",
                     "helper_new": "return list(dict.fromkeys(items))",
+                    "tertiary_symbol": "has_schedule",
+                    "tertiary_old": "return len(items) == 0",
+                    "tertiary_new": "return len(items) > 0",
                 },
             ],
         },
@@ -948,12 +984,13 @@ class ToolUseBugfixEnvironment:
 def build_demo_actions(environment: ToolUseBugfixEnvironment) -> List[Tuple[int, str, Dict[str, Any]]]:
     source_path = next(path for path in environment.variant.files if path.startswith("src/"))
     primary_symbol = next(iter(environment.variant.symbols.keys()))
-    primary_patch, helper_patch = environment.variant.patches
+    primary_patch = environment.variant.patches[0]
+    helper_patch = environment.variant.patches[1]
     full_target = next(target.name for target in environment.variant.test_targets if target.name.endswith("::full"))
     targeted_target = next(target.name for target in environment.variant.test_targets if target.name.endswith("::targeted"))
     second_agent = 1 if environment.num_agents > 1 else 0
     return [
-        (0, "retrieve_file", {"path": source_path, "span": {"start": 1, "end": 6}}),
+        (0, "retrieve_file", {"path": source_path}),
         (second_agent, "search_symbol", {"name": primary_symbol}),
         (0, "apply_patch", {"patch": primary_patch.patch}),
         (second_agent, "run_tests", {"test_target": targeted_target}),

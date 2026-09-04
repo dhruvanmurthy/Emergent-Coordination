@@ -80,6 +80,15 @@ class ToolUseEnvironmentTests(unittest.TestCase):
         self.assertFalse(event.valid)
         self.assertEqual(event.invalid_reason, INVALID_NOOP)
 
+    def test_hard_variants_require_an_additional_defect_fix(self):
+        hard_variant = next(
+            variant
+            for variant in build_bugfix_task_fixtures()
+            if variant.template_id == "billing" and variant.variant_id == "invoice_total"
+        )
+        self.assertEqual(len(hard_variant.required_defects), 3)
+        self.assertEqual(len(hard_variant.patches), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

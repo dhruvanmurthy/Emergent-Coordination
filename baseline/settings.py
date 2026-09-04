@@ -19,8 +19,9 @@ SETTINGS: Dict[str, Any] = {
         ],
         # Primary multi-agent setting. Single-agent runs override this to one agent.
         "num_agents": 2,
-        # Step budget for each episode.
-        "step_budget": 12,
+        # Eight steps leave standard two-defect tasks solvable, but expose the
+        # extra verification/update work in hard three-defect variants.
+        "step_budget": 8,
         # Deterministic pilot seeds. Expand this list for the full 200-400 episode pilot.
         "episode_seeds": list(range(200, 220)),
         # Number of episodes processed in one progress batch.
@@ -45,9 +46,10 @@ SETTINGS: Dict[str, Any] = {
     "tool_use_environment": {
         # Primary task family for the pilot.
         "task_family": "synthetic_bugfix",
-        # Fixed-fixture pilot range. Generated variants remain deferred.
+        # Fixed-fixture pilot range, including a small hard-variant slice.
         "template_count": 8,
         "variants_per_template": 2,
+        "hard_variant_count": 2,
         # Primary outcome variable.
         "outcome_space": ["success", "partial", "failure"],
         # Externally visible environment states.

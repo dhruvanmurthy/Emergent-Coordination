@@ -87,6 +87,23 @@ class ToolUseBaselineTests(unittest.TestCase):
         self.assertTrue(events)
         self.assertIn(environment.outcome, {OUTCOME_SUCCESS, OUTCOME_PARTIAL, OUTCOME_FAILURE})
 
+    def test_single_agent_is_partial_on_hard_variant(self):
+        hard_variant = next(
+            variant
+            for variant in build_bugfix_task_fixtures()
+            if variant.template_id == "billing" and variant.variant_id == "invoice_total"
+        )
+        environment, _ = run_policy_episode(
+            baseline_name=BASELINE_SINGLE_AGENT,
+            seed=31,
+            step_budget=8,
+            fixtures=[hard_variant],
+            template_id=hard_variant.template_id,
+            variant_id=hard_variant.variant_id,
+        )
+
+        self.assertEqual(environment.outcome, OUTCOME_PARTIAL)
+
 
 if __name__ == "__main__":
     unittest.main()

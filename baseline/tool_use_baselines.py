@@ -84,7 +84,8 @@ class SingleAgentPolicy(BasePolicyAdapter):
     def next_action(self, environment: ToolUseBugfixEnvironment) -> Optional[PolicyAction]:
         source_path = next(path for path in environment.variant.files if path.startswith("src/"))
         primary_symbol = next(iter(environment.variant.symbols.keys()))
-        primary_patch, helper_patch = environment.variant.patches
+        primary_patch = environment.variant.patches[0]
+        helper_patch = environment.variant.patches[1]
         targeted_target = next(
             target.name for target in environment.variant.test_targets if target.name.endswith("::targeted")
         )
@@ -160,7 +161,8 @@ class IndependentMultiAgentPolicy(BasePolicyAdapter):
     def _build_agent_plans(self, environment: ToolUseBugfixEnvironment) -> Dict[int, List[PolicyAction]]:
         source_path = next(path for path in environment.variant.files if path.startswith("src/"))
         primary_symbol = next(iter(environment.variant.symbols.keys()))
-        primary_patch, helper_patch = environment.variant.patches
+        primary_patch = environment.variant.patches[0]
+        helper_patch = environment.variant.patches[1]
         targeted_target = next(
             target.name for target in environment.variant.test_targets if target.name.endswith("::targeted")
         )

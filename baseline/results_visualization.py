@@ -22,26 +22,35 @@ def create_dashboard(report: Dict[str, Any], output_dir: str) -> List[str]:
         return []
 
     labels = [name for name, _ in baseline_items]
-    mi_bits = [item["mi_bits"] for _, item in baseline_items]
+    mi_items = [
+        (name, item)
+        for name, item in baseline_items
+        if item.get("two_agent_mi", {}).get("status") == "computed"
+        and item.get("two_agent_mi", {}).get("mi_bits") is not None
+    ]
+    mi_labels = [name for name, _ in mi_items]
+    mi_bits = [item["two_agent_mi"]["mi_bits"] for _, item in mi_items]
     invalid_rates = [item["mean_invalid_call_rate"] for _, item in baseline_items]
     calls_to_completion = [item["mean_calls_to_completion"] for _, item in baseline_items]
     patch_acceptance = [item["mean_patch_acceptance_ratio"] for _, item in baseline_items]
     recovery_rates = [item["mean_invalid_recovery_rate"] for _, item in baseline_items]
-    ci_low = [item["bootstrap"]["lower_bound"] for _, item in baseline_items]
-    ci_high = [item["bootstrap"]["upper_bound"] for _, item in baseline_items]
+    ci_low = [item["two_agent_mi"]["bootstrap"]["lower_bound"] for _, item in mi_items]
+    ci_high = [item["two_agent_mi"]["bootstrap"]["upper_bound"] for _, item in mi_items]
     yerr = np.array([
         [mi - low for mi, low in zip(mi_bits, ci_low)],
         [high - mi for mi, high in zip(mi_bits, ci_high)],
     ])
 
     x = np.arange(len(labels))
+    x_mi = np.arange(len(mi_labels))
     saved_paths: List[str] = []
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    axes[0, 0].bar(x, mi_bits, color=["#2a9d8f", "#e9c46a", "#f4a261", "#264653"][: len(labels)])
-    axes[0, 0].errorbar(x, mi_bits, yerr=yerr, fmt="none", ecolor="#111111", capsize=6)
-    axes[0, 0].set_xticks(x)
-    axes[0, 0].set_xticklabels(labels, rotation=20, ha="right")
+    axes[0, 0].bar(x_mi, mi_bits, color=["#2a9d8f", "#e9c46a", "#f4a261", "#264653"][: len(mi_labels)])
+    if mi_bits:
+        axes[0, 0].errorbar(x_mi, mi_bits, yerr=yerr, fmt="none", ecolor="#111111", capsize=6)
+    axes[0, 0].set_xticks(x_mi)
+    axes[0, 0].set_xticklabels(mi_labels, rotation=20, ha="right")
     axes[0, 0].set_ylabel("MI bits")
     axes[0, 0].set_title("Coordination by Baseline")
 
@@ -72,13 +81,13 @@ def create_dashboard(report: Dict[str, Any], output_dir: str) -> List[str]:
 
     fig2, ax2 = plt.subplots(figsize=(10, 5))
     width = 0.25
-    test_efficiency = [item["mean_test_run_efficiency"] for _, item in baseline_items]
-    p_values = [item["permutation_null"].get("p_value", 0.0) for _, item in baseline_items]
-    ax2.bar(x - width, mi_bits, width=width, label="MI bits", color="#43aa8b")
-    ax2.bar(x, test_efficiency, width=width, label="Test efficiency", color="#f9c74f")
-    ax2.bar(x + width, p_values, width=width, label="Permutation p-value", color="#f94144")
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(labels, rotation=20, ha="right")
+    test_efficiency = [item["mean_test_run_efficiency"] for _, item in mi_items]
+    p_values = [item["two_agent_mi"]["permutation_null"].get("p_value", 0.0) for _, item in mi_items]
+    ax2.bar(x_mi - width, mi_bits, width=width, label="MI bits", color="#43aa8b")
+    ax2.bar(x_mi, test_efficiency, width=width, label="Test efficiency", color="#f9c74f")
+    ax2.bar(x_mi + width, p_values, width=width, label="Permutation p-value", color="#f94144")
+    ax2.set_xticks(x_mi)
+    ax2.set_xticklabels(mi_labels, rotation=20, ha="right")
     ax2.set_title("Coordination Summary")
     ax2.legend()
     fig2.tight_layout()
