@@ -6,7 +6,8 @@ This repository now runs a controlled tool-use coordination study instead of the
 
 - Primary task family: synthetic bugfix workflow.
 - Primary analysis setting: 2-agent coordination.
-- Included pilot baselines: `single_agent`, `random_policy`, `independent_multi_agent`, `prompted_coordination`.
+- Included scripted baselines: `single_agent`, `random_policy`, `independent_multi_agent`, `prompted_coordination`.
+- Opt-in LLM baselines: `llm_single_agent`, `llm_independent_multi_agent`, `llm_prompted_coordination`.
 - Allowed tools: `retrieve_file`, `search_symbol`, `run_tests`, `apply_patch`, `finalize_ticket`.
 - Episode outcomes: `success`, `partial`, `failure`.
 
@@ -19,6 +20,17 @@ python run_baseline_sweep.py
 python export_trajectory_data.py --base-dir results --output-dir results/exports
 python results_visualization.py --base-dir results --output-dir results/plots
 ```
+
+## LLM Pilot
+
+Install the additional client dependencies and ensure `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT` are set in the shell. The LLM sweep is opt-in because it makes a model request for each policy step:
+
+```bash
+pip install -r requirements.txt
+python run_baseline_sweep.py --settings-section llm_baseline_pilot --max-episodes 1
+```
+
+The pilot defaults to five seeds per LLM baseline. Start with one seed per baseline to validate credentials and latency, then increase `--max-episodes` before running the full configured pilot. The default scripted sweep remains unchanged.
 
 ## Core Pipeline
 

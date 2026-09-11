@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
+import argparse
 import json
 import os
 import time
@@ -81,8 +82,7 @@ def save_aggregate_summary(batch_folder, progress):
     return summary
 
 
-def load_runner_settings():
-    section = "baseline_sweep"
+def load_runner_settings(section="baseline_sweep"):
     require_keys(
         section,
         [
@@ -126,6 +126,7 @@ def run_single_episode(baseline_name, seed, batch_folder, model_name, num_agents
         seed=seed,
         step_budget=step_budget,
         num_agents=num_agents,
+        model_name=model_name,
     )
     summary = summarize_baseline_episode(
         baseline_name=baseline_name,
@@ -216,9 +217,29 @@ def run_for_model(model_name, cfg):
     return aggregate
 
 
-def main():
-    cfg = load_runner_settings()
-    print("Loaded controlled-environment sweep settings from settings.py")
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Run configured tool-use baseline sweeps.")
+    parser.add_argument(
+        "--settings-section",
+        default="baseline_sweep",
+        help="Settings section to run, such as baseline_sweep or llm_baseline_pilot.",
+    )
+    parser.add_argument(
+        "--max-episodes",
+        type=int,
+        default=None,
+        help="Limit the number of seeds per baseline for a small validation run.",
+    )
+    args = parser.parse_args(argv)
+
+    cfg = load_runner_settings(args.settings_section)
+    if args.max_episodes is not None:
+        if args.max_episodes < 1:
+            raise ValueError("--max-episodes must be at least 1")
+        cfg["episode_seeds"] = cfg["episode_seeds"][:args.max_episodes]
+        cfg["batch_size"] = min(cfg["batch_size"], args.max_episodes)
+
+    print(f"Loaded {args.settings_section} settings from settings.py")
     for model_name in cfg["models"]:
         run_for_model(model_name, cfg)
 
