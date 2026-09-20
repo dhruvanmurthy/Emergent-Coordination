@@ -44,6 +44,23 @@ SETTINGS: Dict[str, Any] = {
         "batch_size": 1,
         "results_prefix": "tool_use_llm_pilot",
     },
+    # Frozen, sequential, resumable thesis collection configuration.
+    "thesis_experiment": {
+        "environment": "synthetic_bugfix",
+        "models": ["azureai/gpt-5-mini"],
+        "baselines": [
+            "llm_single_agent",
+            "llm_independent_multi_agent",
+            "llm_prompted_coordination",
+        ],
+        "num_agents": 2,
+        "step_budget": 12,
+        "fixture_repetitions": 4,
+        "seed_start": 200,
+        "batch_size": 1,
+        "results_prefix": "thesis",
+        "strict_llm": True,
+    },
     # Defaults used by llm_client.py. Environment variables can override these values.
     "llm": {
         "default_model": "azureai/gpt-5-mini",
@@ -51,7 +68,7 @@ SETTINGS: Dict[str, Any] = {
         "default_timeout_seconds": 45.0,
         "default_max_retries": 5,
         "default_base_delay_seconds": 1.0,
-        "max_completion_tokens": 256,
+        "max_completion_tokens": 1024,
         "action_parse_attempts": 2,
     },
     # Minimal single-run example configuration.

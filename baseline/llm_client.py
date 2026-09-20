@@ -43,6 +43,27 @@ DEFAULT_ACTION_PARSE_ATTEMPTS = int(
 )
 
 
+class LLMRequestError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        provider: str,
+        model: str,
+        attempt_count: int,
+        last_error: Exception,
+    ):
+        self.provider = provider
+        self.model = model
+        self.attempt_count = attempt_count
+        self.last_error = last_error
+        self.retry_exhausted = True
+        self.error_category = _classify_request_error(last_error)
+        super().__init__(
+            f"chat_json() failed for provider={provider}, model={model}. "
+            f"Last error: {type(last_error).__name__}: {last_error}"
+        )
+
+
 @dataclass
 class _Message:
     role: str
@@ -175,8 +196,85 @@ def _is_retryable_exception(exc: Exception) -> bool:
     if isinstance(exc, retryable_types):
         return True
 
-    status_code = getattr(exc, "status_code", None)
+    status_code = _status_code(exc)
     return isinstance(status_code, int) and status_code >= 500
+
+
+def _status_code(exc: Any) -> Any:
+    status_code = getattr(exc, "status_code", None)
+    if isinstance(status_code, int):
+        return status_code
+    response = getattr(exc, "response", None)
+    if isinstance(response, dict):
+        return response.get("status_code")
+    return getattr(response, "status_code", None)
+
+
+def _structured_error_value(exc: Any, names: Tuple[str, ...]) -> Any:
+    sources = [exc, getattr(exc, "error", None), getattr(exc, "body", None)]
+    response = getattr(exc, "response", None)
+    if response is not None:
+        sources.append(response)
+
+    for source in sources:
+        if isinstance(source, dict):
+            nested_error = source.get("error")
+            if isinstance(nested_error, dict):
+                for name in names:
+                    if name in nested_error:
+                        return nested_error[name]
+            for name in names:
+                if name not in source:
+                    continue
+                value = source[name]
+                if isinstance(value, dict) and name == "error":
+                    for nested_name in names:
+                        if nested_name in value:
+                            return value[nested_name]
+                return value
+        else:
+            for name in names:
+                value = getattr(source, name, None)
+                if value is not None and not callable(value):
+                    return value
+    return None
+
+
+def _classify_request_error(exc: Exception) -> str:
+    error_code = _structured_error_value(exc, ("code", "error_code", "type"))
+    if isinstance(error_code, str):
+        normalized_code = error_code.lower()
+        if normalized_code in {"invalid_api_key", "authentication_error", "unauthorized"}:
+            return "authentication"
+        if normalized_code in {"insufficient_quota", "quota_exceeded", "billing_hard_limit_reached"}:
+            return "quota"
+        if normalized_code in {"permission_denied", "forbidden", "access_denied"}:
+            return "non_recoverable_access"
+
+    exception_name = type(exc).__name__
+    if exception_name in {"AuthenticationError", "InvalidAPIKeyError"}:
+        return "authentication"
+    if exception_name in {"PermissionDeniedError", "AuthorizationError"}:
+        return "non_recoverable_access"
+    if exception_name in {"QuotaExceededError", "InsufficientQuotaError"}:
+        return "quota"
+
+    status_code = _status_code(exc)
+    if isinstance(status_code, int):
+        if status_code == 401:
+            return "authentication"
+        if status_code == 403:
+            return "non_recoverable_access"
+        if status_code == 429:
+            return "quota_or_rate_limit"
+        if 400 <= status_code < 500:
+            return "non_recoverable_access"
+        if status_code >= 500:
+            return "repeated_api_failure"
+
+    if _is_retryable_exception(exc):
+        return "repeated_api_failure"
+    return "api_failure"
 
 
 def _call_chat_completion(
@@ -222,8 +320,10 @@ def chat_json(
         raise
 
     last_error: Optional[Exception] = None
+    attempts_made = 0
     attempt_count = max(int(max_retries), 1)
     for attempt in range(1, attempt_count + 1):
+        attempts_made = attempt
         try:
             return _call_chat_completion(
                 client=client,
@@ -246,7 +346,10 @@ def chat_json(
             reason=f"request_failed_after_retries: {type(last_error).__name__}: {last_error}",
         )
 
-    raise RuntimeError(
-        f"chat_json() failed for provider={provider}, model={model}. "
-        f"Last error: {type(last_error).__name__}: {last_error}"
+    request_error = LLMRequestError(
+        provider=provider,
+        model=model,
+        attempt_count=attempts_made,
+        last_error=last_error or RuntimeError("unknown request failure"),
     )
+    raise request_error from request_error.last_error

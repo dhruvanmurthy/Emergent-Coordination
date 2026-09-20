@@ -50,6 +50,24 @@ class PolicyAction:
     arguments: Dict[str, Any]
 
 
+class LLMPolicyError(RuntimeError):
+    pass
+
+
+class LLMFallbackError(LLMPolicyError):
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(f"LLM fallback response received: {reason}")
+
+
+class LLMCallError(LLMPolicyError):
+    pass
+
+
+class LLMResponseError(LLMPolicyError):
+    pass
+
+
 def _freeze_arguments(arguments: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
     def freeze_value(value: Any) -> Any:
         if isinstance(value, dict):
@@ -245,19 +263,37 @@ class _LLMPolicyBase(BasePolicyAdapter):
         num_agents: int,
         model_name: Optional[str] = None,
         llm_call: Optional[Callable[[str], Any]] = None,
+        strict_llm: bool = False,
     ):
         super().__init__(seed=seed, num_agents=num_agents)
         self.model_name = model_name or DEFAULT_LLM_MODEL
         self.llm_call = llm_call or self._call_model
+        self.strict_llm = strict_llm
         self.parse_attempts = max(DEFAULT_ACTION_PARSE_ATTEMPTS, 1)
         self.action_history: List[PolicyAction] = []
+        self.llm_audit: Dict[str, Any] = {
+            "strict": strict_llm,
+            "fallback_response_count": 0,
+            "fallback_reasons": [],
+            "fallback_action_count": 0,
+            "model_error_count": 0,
+            "model_errors": [],
+            "invalid_response_count": 0,
+        }
 
     def _call_model(self, prompt: str) -> Any:
         return chat_json(
             model=self.model_name,
             prompt=prompt,
             max_completion_tokens=DEFAULT_MAX_COMPLETION_TOKENS,
+            soft_fallback=not self.strict_llm,
         )
+
+    def _policy_audit_snapshot(self) -> Dict[str, Any]:
+        return {
+            key: list(value) if isinstance(value, list) else value
+            for key, value in self.llm_audit.items()
+        }
 
     def _build_prompt(
         self,
@@ -338,6 +374,11 @@ class _LLMPolicyBase(BasePolicyAdapter):
             try:
                 response = self.llm_call(f"{base_prompt}{retry_note}")
                 if getattr(response, "is_fallback", False):
+                    reason = str(getattr(response, "fallback_reason", "unspecified"))
+                    self.llm_audit["fallback_response_count"] += 1
+                    self.llm_audit["fallback_reasons"].append(reason)
+                    if self.strict_llm:
+                        raise LLMFallbackError(reason)
                     break
                 payload = self._response_payload(response)
                 action = self._match_action(
@@ -353,12 +394,30 @@ class _LLMPolicyBase(BasePolicyAdapter):
                     self.action_history.append(action)
                     return action
                 raise ValueError("response did not match a currently valid action")
+            except LLMPolicyError as exc:
+                exc.policy_audit = self._policy_audit_snapshot()
+                raise
             except (TypeError, ValueError) as exc:
+                self.llm_audit["invalid_response_count"] += 1
+                if self.strict_llm and _ == self.parse_attempts - 1:
+                    error = LLMResponseError(
+                        f"LLM response remained invalid after {self.parse_attempts} attempts: {exc}"
+                    )
+                    error.policy_audit = self._policy_audit_snapshot()
+                    raise error from exc
                 retry_note = (
                     "\n\nThe previous response was invalid: "
                     f"{exc}. Return only one exact currently valid action as JSON."
                 )
             except Exception as exc:
+                self.llm_audit["model_error_count"] += 1
+                self.llm_audit["model_errors"].append(f"{type(exc).__name__}: {exc}")
+                if self.strict_llm:
+                    error = LLMCallError(
+                        f"LLM model call failed: {type(exc).__name__}: {exc}"
+                    )
+                    error.policy_audit = self._policy_audit_snapshot()
+                    raise error from exc
                 retry_note = (
                     "\n\nThe previous model call failed: "
                     f"{type(exc).__name__}: {exc}. Return one exact valid action."
@@ -369,6 +428,7 @@ class _LLMPolicyBase(BasePolicyAdapter):
             preferred_agent_id=preferred_agent_id,
         )
         if fallback is not None:
+            self.llm_audit["fallback_action_count"] += 1
             self.action_history.append(fallback)
         return fallback
 
@@ -502,8 +562,15 @@ class LLMIndependentMultiAgentPolicy(_LLMPolicyBase):
         num_agents: int,
         model_name: Optional[str] = None,
         llm_call: Optional[Callable[[str], Any]] = None,
+        strict_llm: bool = False,
     ):
-        super().__init__(seed=seed, num_agents=num_agents, model_name=model_name, llm_call=llm_call)
+        super().__init__(
+            seed=seed,
+            num_agents=num_agents,
+            model_name=model_name,
+            llm_call=llm_call,
+            strict_llm=strict_llm,
+        )
         self.turn_index = 0
 
     def next_action(self, environment: ToolUseBugfixEnvironment) -> Optional[PolicyAction]:
@@ -528,8 +595,15 @@ class LLMPromptedCoordinationPolicy(_LLMPolicyBase):
         num_agents: int,
         model_name: Optional[str] = None,
         llm_call: Optional[Callable[[str], Any]] = None,
+        strict_llm: bool = False,
     ):
-        super().__init__(seed=seed, num_agents=num_agents, model_name=model_name, llm_call=llm_call)
+        super().__init__(
+            seed=seed,
+            num_agents=num_agents,
+            model_name=model_name,
+            llm_call=llm_call,
+            strict_llm=strict_llm,
+        )
         self.turn_index = 0
 
     def next_action(self, environment: ToolUseBugfixEnvironment) -> Optional[PolicyAction]:
@@ -553,6 +627,7 @@ def build_policy_adapter(
     num_agents: int,
     model_name: Optional[str] = None,
     llm_call: Optional[Callable[[str], Any]] = None,
+    strict_llm: bool = False,
 ) -> BasePolicyAdapter:
     if baseline_name == BASELINE_SINGLE_AGENT:
         return SingleAgentPolicy(seed=seed, num_agents=num_agents)
@@ -563,13 +638,20 @@ def build_policy_adapter(
     if baseline_name == BASELINE_PROMPTED_COORDINATION:
         return PromptedCoordinationPolicy(seed=seed, num_agents=num_agents)
     if baseline_name == BASELINE_LLM_SINGLE_AGENT:
-        return LLMSingleAgentPolicy(seed=seed, num_agents=num_agents, model_name=model_name, llm_call=llm_call)
+        return LLMSingleAgentPolicy(
+            seed=seed,
+            num_agents=num_agents,
+            model_name=model_name,
+            llm_call=llm_call,
+            strict_llm=strict_llm,
+        )
     if baseline_name == BASELINE_LLM_INDEPENDENT_MULTI_AGENT:
         return LLMIndependentMultiAgentPolicy(
             seed=seed,
             num_agents=num_agents,
             model_name=model_name,
             llm_call=llm_call,
+            strict_llm=strict_llm,
         )
     if baseline_name == BASELINE_LLM_PROMPTED_COORDINATION:
         return LLMPromptedCoordinationPolicy(
@@ -577,6 +659,7 @@ def build_policy_adapter(
             num_agents=num_agents,
             model_name=model_name,
             llm_call=llm_call,
+            strict_llm=strict_llm,
         )
     raise ValueError(f"Unknown baseline policy: {baseline_name}")
 
@@ -592,6 +675,7 @@ def run_policy_episode(
     variant_id: Optional[str] = None,
     model_name: Optional[str] = None,
     llm_call: Optional[Callable[[str], Any]] = None,
+    strict_llm: bool = False,
 ) -> Tuple[ToolUseBugfixEnvironment, List[ToolEvent]]:
     if baseline_name not in VALID_BASELINES:
         raise ValueError(f"Unknown baseline name: {baseline_name}")
@@ -611,6 +695,7 @@ def run_policy_episode(
         num_agents=episode_agents,
         model_name=model_name,
         llm_call=llm_call,
+        strict_llm=strict_llm,
     )
     events: List[ToolEvent] = []
 
@@ -621,6 +706,7 @@ def run_policy_episode(
         events.append(environment.step(action.agent_id, action.tool_name, action.arguments))
 
     environment.validate_abstraction_invariants(events)
+    environment.policy_audit = getattr(policy, "llm_audit", {})
     return environment, events
 
 
@@ -651,6 +737,7 @@ def summarize_baseline_episode(
             "test_run_efficiency": test_attempts / len(events) if events else 0.0,
             "patch_acceptance_ratio": accepted_patches / patch_attempts if patch_attempts else 0.0,
             "semantic_noop_count": environment.invalid_call_counts[INVALID_NOOP],
+            "policy_audit": getattr(environment, "policy_audit", {}),
         }
     )
     return summary

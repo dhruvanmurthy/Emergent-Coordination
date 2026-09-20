@@ -1,7 +1,9 @@
 import unittest
 
 from llm_client import (
+    LLMRequestError,
     _call_chat_completion,
+    _classify_request_error,
     _normalize_azure_endpoint,
     _uses_max_completion_tokens,
 )
@@ -19,6 +21,12 @@ class _FakeCompletions:
 class _FakeClient:
     def __init__(self):
         self.chat = type("Chat", (), {"completions": _FakeCompletions()})()
+
+
+class _StructuredApiError(Exception):
+    def __init__(self, status_code, code):
+        self.response = {"status_code": status_code}
+        self.body = {"error": {"code": code}}
 
 
 class LLMClientTests(unittest.TestCase):
@@ -52,6 +60,21 @@ class LLMClientTests(unittest.TestCase):
         self.assertEqual(kwargs["max_tokens"], 64)
         self.assertNotIn("max_completion_tokens", kwargs)
         self.assertFalse(_uses_max_completion_tokens("gpt-4o-mini"))
+
+    def test_request_error_preserves_structured_quota_and_retry_metadata(self):
+        api_error = _StructuredApiError(429, "insufficient_quota")
+
+        request_error = LLMRequestError(
+            provider="azureai",
+            model="gpt-5-mini",
+            attempt_count=5,
+            last_error=api_error,
+        )
+
+        self.assertEqual(_classify_request_error(api_error), "quota")
+        self.assertEqual(request_error.error_category, "quota")
+        self.assertEqual(request_error.attempt_count, 5)
+        self.assertTrue(request_error.retry_exhausted)
 
 
 if __name__ == "__main__":
