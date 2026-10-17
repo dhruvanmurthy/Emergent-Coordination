@@ -41,11 +41,15 @@ This file documents the active controlled tool-use pipeline.
 2. `smoothing_sensitivity(...)`
 - Reports MI under multiple smoothing settings.
 
-3. `bootstrap_confidence_interval(...)`
+3. `shannon_entropy(...)`
+- Reports empirical outcome entropy in bits to contextualize MI estimates.
+
+4. `bootstrap_confidence_interval(...)`
 - Produces bootstrap confidence intervals for MI.
 
-4. `permutation_null_distribution(...)`
+5. `permutation_null_distribution(...)`
 - Estimates a null distribution by shuffling outcomes and computes a permutation p-value.
+- This null diagnostic answers a different question from the bootstrap interval; neither compares conditions.
 
 Current interpretation constraint:
 - Full action traces are currently used as categorical MI inputs. The pilot showed high trace cardinality and constant outcomes for scripted baselines, so MI conclusions are deferred until coarsened features and sanity checks are added.

@@ -74,11 +74,27 @@ results/exports/
 └── export_manifest.json
 ```
 
+## Offline thesis analysis
+
+The retrospective thesis workload and fixture-outcome analyses are maintained in
+`baseline/analysis_common.py`, `baseline/analyze_agent_workload.py`,
+`baseline/analyze_fixture_outcomes.py`, and `baseline/run_all.py`. They validate
+and analyze the saved thesis run without making model/API calls. See
+[OFFLINE_THESIS_ANALYSIS.md](OFFLINE_THESIS_ANALYSIS.md) for metric definitions,
+interpretation limits, and the complete output list.
+
+From this directory, run:
+
+```bash
+python run_all.py "results/thesis_azureai_gpt-5-mini_20260913_000237" --out "results/thesis_offline_analysis"
+```
+
+The validated report and CSVs are in `results/thesis_offline_analysis/`.
+
 ## Notes
 
 - The scalar-game workflow is retired from the active code path.
 - Sweep episode directories include the baseline and seed so repeated fixture selections are not overwritten.
 - The current 80-episode run is a pipeline-validation pilot, not a final research result. Scripted baselines have constant success outcomes, and random-policy traces are high-cardinality.
 - Pending execution-time and research-validity checks are tracked in `validation.md`.
-
 

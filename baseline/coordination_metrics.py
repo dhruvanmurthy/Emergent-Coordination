@@ -18,6 +18,17 @@ def _normalize_source_value(value: Any) -> Tuple[Any, ...]:
     return (value,)
 
 
+def shannon_entropy(samples: Sequence[Any]) -> float:
+    """Calculate empirical Shannon entropy in bits."""
+    if not samples:
+        raise ValueError("At least one sample is required")
+    sample_count = len(samples)
+    return -sum(
+        (count / sample_count) * math.log2(count / sample_count)
+        for count in Counter(samples).values()
+    )
+
+
 def _percentile(sorted_values: Sequence[float], probability: float) -> float:
     if not sorted_values:
         raise ValueError("percentile requires at least one value")

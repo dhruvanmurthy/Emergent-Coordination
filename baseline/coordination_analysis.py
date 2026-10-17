@@ -10,6 +10,7 @@ from coordination_metrics import (
     bootstrap_confidence_interval,
     estimate_mi_from_records,
     permutation_null_distribution,
+    shannon_entropy,
     smoothing_sensitivity,
 )
 from settings import get_required
@@ -250,6 +251,7 @@ def build_mi_report(
             "eligible_episodes": 0,
             "unique_source_state_count": 0,
             "unique_outcome_count": 0,
+            "outcome_entropy_bits": None,
             "mi_bits": None,
             "status": "excluded_less_than_two_agents",
         }
@@ -261,6 +263,7 @@ def build_mi_report(
         "eligible_episodes": len(mi_dataset),
         "unique_source_state_count": len({tuple(record[key] for key in source_keys) for record in mi_dataset}),
         "unique_outcome_count": len({record["outcome"] for record in mi_dataset}),
+        "outcome_entropy_bits": shannon_entropy([record["outcome"] for record in mi_dataset]),
         "mi_bits": estimate_mi_from_records(
             mi_dataset,
             source_keys=source_keys,
@@ -325,7 +328,11 @@ def build_one_agent_reference_report(
         "note": "One-agent reference only; not a two-agent coordination MI estimate.",
     }
     if not dataset:
+        report["outcome_entropy_bits"] = None
         return report
+    report["outcome_entropy_bits"] = shannon_entropy(
+        [record["outcome"] for record in dataset]
+    )
     report["one_agent_mi_bits"] = estimate_mi_from_records(
         dataset,
         source_keys=source_keys,

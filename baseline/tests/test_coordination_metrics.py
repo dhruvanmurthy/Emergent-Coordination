@@ -5,11 +5,20 @@ from coordination_metrics import (
     estimate_mi_from_records,
     mutual_information,
     permutation_null_distribution,
+    shannon_entropy,
     smoothing_sensitivity,
 )
 
 
 class CoordinationMetricsTests(unittest.TestCase):
+    def test_outcome_entropy_is_reported_in_bits(self):
+        self.assertAlmostEqual(shannon_entropy(["success", "success", "partial", "partial"]), 1.0)
+        self.assertEqual(shannon_entropy(["success"] * 4), 0.0)
+
+    def test_outcome_entropy_requires_observations(self):
+        with self.assertRaises(ValueError):
+            shannon_entropy([])
+
     def test_perfect_mapping_has_one_bit_of_mi(self):
         sources = [(0, 0), (0, 0), (1, 1), (1, 1)]
         targets = ["failure", "failure", "success", "success"]

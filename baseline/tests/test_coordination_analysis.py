@@ -197,6 +197,9 @@ class CoordinationAnalysisTests(unittest.TestCase):
             self.assertEqual(baseline_report["two_agent_mi"]["representation"], "coarsened_action_profile")
             self.assertEqual(baseline_report["two_agent_mi"]["representation_details"]["count_bin_cap"], 2)
             self.assertIn("unique_source_state_count", baseline_report["two_agent_mi"])
+            self.assertAlmostEqual(
+                baseline_report["two_agent_mi"]["outcome_entropy_bits"], 1.0
+            )
             self.assertIn("coarsened_action_profile", baseline_report["mi_representation_comparison"])
             self.assertIn("coarsened_action_counts", baseline_report["mi_representation_comparison"])
             self.assertIn("full_trace", baseline_report["mi_representation_comparison"])
