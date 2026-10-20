@@ -1,0 +1,375 @@
+{
+  "source": "THESIS_REPORT(1).md; revised report supplied 17 October 2026",
+  "scope": "Report-level values only; repository and episode artifacts not supplied.",
+  "condition_names": [
+    "Single-agent",
+    "Independent multi-agent",
+    "Prompted coordination"
+  ],
+  "final_outcomes": {
+    "success": [
+      64,
+      60,
+      63
+    ],
+    "partial": [
+      0,
+      4,
+      1
+    ],
+    "failure": [
+      0,
+      0,
+      0
+    ],
+    "n": [
+      64,
+      64,
+      64
+    ]
+  },
+  "scripted_outcomes": {
+    "conditions": [
+      "Single-agent",
+      "Random valid-action",
+      "Independent multi-agent",
+      "Prompted coordination"
+    ],
+    "success": [
+      16,
+      6,
+      16,
+      16
+    ],
+    "partial": [
+      4,
+      10,
+      4,
+      4
+    ],
+    "failure": [
+      0,
+      4,
+      0,
+      0
+    ],
+    "n": [
+      20,
+      20,
+      20,
+      20
+    ]
+  },
+  "tool_counts": {
+    "tools": [
+      "Retrieve file",
+      "Search symbol",
+      "Apply patch",
+      "Run tests",
+      "Finalize ticket"
+    ],
+    "counts": [
+      [
+        58,
+        25,
+        136,
+        133,
+        64
+      ],
+      [
+        66,
+        19,
+        132,
+        113,
+        64
+      ],
+      [
+        51,
+        21,
+        135,
+        100,
+        64
+      ]
+    ]
+  },
+  "retry": {
+    "first_attempt_completed": [
+      57,
+      53,
+      59
+    ],
+    "affected_ids": [
+      7,
+      11,
+      5
+    ],
+    "failed_attempts": [
+      18,
+      27,
+      11
+    ],
+    "further_failed_retries": [
+      11,
+      16,
+      6
+    ],
+    "recovered_invalid_responses": [
+      34,
+      35,
+      27
+    ],
+    "final_episodes_with_invalid_response": [
+      26,
+      30,
+      25
+    ],
+    "failure_reasons": [
+      42,
+      13,
+      1
+    ]
+  },
+  "mi": {
+    "conditions": [
+      "Independent multi-agent",
+      "Prompted coordination"
+    ],
+    "n": [
+      64,
+      58
+    ],
+    "bits": [
+      0.046617,
+      0.040041
+    ],
+    "low": [
+      0.001735,
+      0.0
+    ],
+    "high": [
+      0.197643,
+      0.125826
+    ],
+    "permutation_p": [
+      0.207171,
+      0.386454
+    ],
+    "entropy_bits": [
+      0.3373,
+      0.1257
+    ],
+    "all64_coordinator_point": 0.038524
+  },
+  "profile_tables": {
+    "independent": [
+      [
+        "finalized",
+        "updated",
+        22,
+        2
+      ],
+      [
+        "finalized",
+        "verified",
+        1,
+        1
+      ],
+      [
+        "updated",
+        "finalized",
+        37,
+        1
+      ]
+    ],
+    "coordinator_paired": [
+      [
+        "finalized",
+        "retrieved",
+        3,
+        0
+      ],
+      [
+        "finalized",
+        "updated",
+        11,
+        1
+      ],
+      [
+        "finalized",
+        "verified",
+        6,
+        0
+      ],
+      [
+        "updated",
+        "finalized",
+        37,
+        0
+      ]
+    ],
+    "coordinator_all64": [
+      [
+        "finalized",
+        "no_actions",
+        5,
+        0
+      ],
+      [
+        "finalized",
+        "retrieved",
+        3,
+        0
+      ],
+      [
+        "finalized",
+        "updated",
+        11,
+        1
+      ],
+      [
+        "finalized",
+        "verified",
+        6,
+        0
+      ],
+      [
+        "no_actions",
+        "finalized",
+        1,
+        0
+      ],
+      [
+        "updated",
+        "finalized",
+        37,
+        0
+      ]
+    ]
+  },
+  "contrasts": {
+    "labels": [
+      "Single \u2212 independent",
+      "Single \u2212 prompted",
+      "Prompted \u2212 independent"
+    ],
+    "difference_pp": [
+      6.25,
+      1.5625,
+      4.6875
+    ],
+    "reported_low_pp": [
+      0,
+      0,
+      0
+    ],
+    "reported_high_pp": [
+      15.62,
+      4.69,
+      12.5
+    ]
+  },
+  "participation": {
+    "agent0_calls": [
+      210,
+      228
+    ],
+    "agent1_calls": [
+      184,
+      143
+    ],
+    "mean_imbalance_percent": [
+      6.81,
+      33.08
+    ],
+    "mean_tvd": [
+      0.48,
+      0.884
+    ],
+    "both_active_n": [
+      64,
+      58
+    ],
+    "single_active_n": [
+      0,
+      6
+    ]
+  },
+  "partial_cases": [
+    [
+      "Discount order \u00b7 independent \u00b7 case A",
+      5,
+      "Primary defect"
+    ],
+    [
+      "Discount order \u00b7 independent \u00b7 case B",
+      6,
+      "Primary defect"
+    ],
+    [
+      "Invoice total \u00b7 independent \u00b7 case A",
+      5,
+      "Tertiary defect"
+    ],
+    [
+      "Invoice total \u00b7 independent \u00b7 case B",
+      5,
+      "Tertiary defect"
+    ],
+    [
+      "Invoice total \u00b7 prompted",
+      4,
+      "Tertiary defect"
+    ]
+  ],
+  "families": [
+    "Billing",
+    "Flag parser",
+    "Inventory",
+    "Math operations",
+    "Ranking",
+    "Retry policy",
+    "Scheduler",
+    "String utilities"
+  ],
+  "family_success_counts": [
+    [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    [
+      4,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    [
+      7,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ]
+  ],
+  "agent_patch_test_counts": {
+    "independent": null,
+    "coordinator": {
+      "agent0_patch": 109,
+      "agent1_patch": 26,
+      "agent0_tests": 36,
+      "agent1_tests": 64
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "final_outcomes_total": true,
+  "tool_counts_total": true,
+  "patch_total": true,
+  "retry_accounting": true,
+  "MI_independent": true,
+  "computed_independent": {
+    "entropy_bits": 0.3372900666170139,
+    "mi_bits": 0.04661701365025885
+  },
+  "MI_coordinator_paired": true,
+  "computed_coordinator_paired": {
+    "entropy_bits": 0.12565805017256743,
+    "mi_bits": 0.040040770799401826
+  },
+  "MI_coordinator_all64": true,
+  "computed_coordinator_all64": {
+    "entropy_bits": 0.11611507530476972,
+    "mi_bits": 0.03852441587283833
+  },
+  "wilson_intervals_percent": {
+    "Single-agent": [
+      94.33759402071946,
+      100.0
+    ],
+    "Independent multi-agent": [
+      85.00251490779132,
+      97.54287986033819
+    ],
+    "Prompted coordination": [
+      91.66589839990573,
+      99.72364580766624
+    ]
+  }
+}

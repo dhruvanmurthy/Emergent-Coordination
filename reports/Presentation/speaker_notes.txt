@@ -1,0 +1,64 @@
+Investigating Coordination Signals in Multi-Agent Tool-Using Language Models
+Speaker notes for a 30-minute presentation
+
+Pacing: 25 minutes for the prepared talk, followed by up to 5 minutes for questions. Slide 20 is reserved for Q&A. The notes are intentionally separate from the PPTX.
+
+SLIDE 1 — Title | 0:45
+Good morning/afternoon. I will present a study of how to make coordination-related behavior more observable in tool-using language-model systems. The central focus is a controlled synthetic software-repair task. The key result is not that a multi-agent policy wins; rather, explicit action traces let us inspect outcomes, participation, and stopping behavior without overclaiming what those observations mean.
+
+SLIDE 2 — Why success is not coordination | 1:20
+A team can succeed while its members act independently, and a team can fail despite structured contributions. Success alone does not reveal who did what, whether actions were complementary, or whether the system stopped too early. We therefore record tool actions and state transitions, then relate those traces to outcomes. Keep the evidence distinction in mind: these logs support behavioral description, not a direct measure of emergence.
+
+SLIDE 3 — Two phases, different evidence | 1:20
+The project began with a repeated guessing game involving private guesses and shared directional feedback. The later tool-use phase changed the task and observation unit: policies now select explicit tools over shared synthetic state. A subsequent replay bridge checked selected guessing-game transitions, but it came after the tool-use experiments. These phases share a motivation, not an outcome measure; their rates must not be compared as if they were arms of one experiment.
+
+SLIDE 4 — Questions and contribution | 1:00
+The final experiment asks three descriptive questions: do outcomes differ across matched policies; how do action use and nominal actor participation vary; and when do episodes stop with work incomplete? The contribution is a constrained environment that records action-to-outcome traces, alongside a careful separation of task performance from response retries. These are bounded evaluation questions, not a test that multi-agent systems are generally better.
+
+SLIDE 5 — Matched experimental design | 1:20
+There are eight fixture families, two variants per family, and four repetitions per variant. Each of three policies runs the same 64 fixture/repetition assignments, producing 192 completed final episodes. Matching improves comparability for this catalog, but it does not make model responses deterministic or make these engineered fixtures representative of all software tasks.
+
+SLIDE 6 — What differs between policies | 1:20
+The single-agent condition attributes each action to actor zero. The independent condition alternates actor IDs in the adapter. In the prompted-coordination condition, one action-selection process may assign the action to either nominal actor. All turns share state and recent action history; there is no separate persistent memory or direct communication between autonomous agents. Because wording and actor-assignment authority change together, the contrast cannot isolate a prompt-only effect.
+
+SLIDE 7 — Architecture and artifact flow | 1:25
+The runner starts from a frozen manifest and sends each episode through a policy adapter. The model sees the shared task state and a filtered list of valid actions. The environment validates and applies a selected action, then writes canonical event and summary files. This architecture makes the state/action boundary observable and helps reconcile outputs, but the fixture evaluator remains synthetic.
+
+SLIDE 8 — Action validation boundary | 1:10
+The model response goes through two distinct stages: policy parsing and allow-list validation, then environment validation and state transition. The valid-action list can include exact catalog patch text and changes as the state changes. Therefore, 100 percent accepted patches and zero invalid submitted calls measure compliance with the supplied interface. They do not measure free-form patch generation or successful repair of real code.
+
+SLIDE 9 — Final outcomes | 1:40
+There were 187 successes, five partial outcomes, and no failures. The policy counts were 64 successes for single-agent, 60 for independent multi-agent, and 63 for prompted coordination, each out of 64. Marginal Wilson intervals are shown for context; the paired comparison uses a separate fixture-cluster bootstrap. The high completion rate creates a ceiling effect and leaves only five partial episodes to distinguish conditions.
+
+SLIDE 10 — Paired contrasts | 1:10
+The observed differences are plus 6.25 percentage points for single-agent versus independent, plus 1.56 for single-agent versus prompted, and plus 4.69 for prompted versus independent. Each reported 95 percent cluster-bootstrap interval includes zero. The intervals describe resampling of this engineered catalog's fixture variants; they do not prove equivalence, establish a causal effect, or generalize to a population of repair tasks.
+
+SLIDE 11 — What the partial outcomes show | 1:40
+All five partials are in billing fixtures. Each episode finalized after four to six calls, even though the budget was twelve. Two discount-order cases left the primary defect unresolved; three invoice-total cases left the tertiary defect unresolved. This tells us what was incomplete and when the trace stopped, but not why the model chose to finalize. Stopping behavior is a valuable target for a better-designed follow-up.
+
+SLIDE 12 — Action volume and mix | 1:10
+The final traces contain 1,181 events: 416 single-agent, 394 independent, and 371 prompted. Mean calls per episode were 6.50, 6.16, and 5.80. Fewer calls are not necessarily more efficient: the short run can reflect early finalization, including partial outcomes. Test calls are synthetic fixture checks, and patch calls use known replacements; neither should be mistaken for real test execution or arbitrary code repair.
+
+SLIDE 13 — Response recovery and collection | 1:20
+The final traces contain 96 recoverable invalid model responses across 81 episodes. At the collection level, 169 of 192 manifest identities completed on the first pass. The remaining 23 identities eventually completed after 56 failed whole-episode attempts, making 248 total executions but still 192 final episodes. Collection failures are not task failures; however, retrying means the completed-trace sample is not a uniformly capped first-pass protocol.
+
+SLIDE 14 — Exploratory action-profile MI | 1:40
+The reported plug-in mutual-information estimates are about 0.0466 bits for independent multi-agent and 0.0400 bits for the coordinator's paired sample. Permutation p-values are 0.207 and 0.386. The action profile is compressed to one priority category per actor, outcomes are sparse, and six single-active coordinator episodes are excluded from the paired estimate. These numbers are exploratory associations, not validated coordination scores and not the temporal information decomposition in the motivating paper.
+
+SLIDE 15 — What the compressed profiles retain | 1:10
+Every observed joint profile includes a finalized category because all traces end in finalization and the priority rule retains the highest-priority category. The representation can therefore encode terminal actor assignment while hiding earlier retrieval, patching, or testing. The table shows few joint states and very few partial outcomes. Any apparent relationship may reflect fixture difficulty as well as behavior.
+
+SLIDE 16 — Participation is assignment-shaped | 1:10
+Independent actors had a relatively balanced pooled workload, while prompted coordination attributed more work to actor zero and showed greater tool-mix distance. But independent alternation and coordinator-selected attribution create different mechanisms. Six coordinator episodes had tool events from only one nominal actor. These descriptive patterns are not evidence of emergent specialization or proof that the assigned division of labor helped.
+
+SLIDE 17 — Fixture family concentration | 1:00
+All seven non-billing families succeeded in every episode. Billing accounts for all five partials, with per-policy billing success counts of eight, four, and seven out of eight. This identifies where the observed incompletion occurred, but the family is a small, engineered set. It should not be generalized into a broad claim about software-task difficulty.
+
+SLIDE 18 — Interpretation and limitations | 1:40
+The main takeaway is methodological: explicit action/state traces make completion, stopping, and actor attribution inspectable. The main limitations are one model/provider, one synthetic task catalog, near-ceiling outcomes, filtered actions, and policy differences bundled with actor assignment. The synthetic evaluator does not execute code. The results do not establish multi-agent superiority, a prompt effect, autonomous-agent collaboration, emergent specialization, or paper-style synergy.
+
+SLIDE 19 — Closing and next study | 1:40
+To strengthen the evidence, the next study should separate prompt wording from actor assignment, preserve action sequences rather than one priority label, include validated tasks with a broader difficulty range, and predefine retry and stopping protocols. It should also test repaired code outside the simulator and replicate across models. The defensible conclusion today is narrower: in this synthetic setting, auditable traces support bounded descriptive comparison and reveal premature finalization as the immediate pattern behind every partial outcome.
+
+SLIDE 20 — Q&A | 5:00
+Invite questions. If discussion is quiet, prompt reviewers with: What task would best distinguish useful coordination from shared task difficulty? Which policy factor should be isolated first? What evidence would be needed before calling a behavior emergent? Reiterate that the current experiment is descriptive and bounded.
