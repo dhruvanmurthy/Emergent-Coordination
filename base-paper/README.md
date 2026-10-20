@@ -197,11 +197,46 @@ python run_experiment_multi_model.py "gpt-3.5-turbo"
 - Statistical analysis pipelines
 
 
+## Offline tool-action bridge
+
+`tool_action_environment.py` represents each Phase 1 numerical contribution as a
+`submit_guess(value)` action with the acting agent ID in the event metadata. It
+preserves the configured sum/mean rule, ranges, Python mean rounding, directional
+feedback, per-agent private guess history, and native solved/unsolved stopping.
+Observations omit the target, pending guesses, group size, and peer identities.
+The Phase 1 round limit is independent of Phase 2's tool-call budget.
+
+From the repository root, replay the available saved trajectory and the labeled
+synthetic mean-mode regression case without an LLM client or API credentials:
+
+```powershell
+conda activate finalsem
+python base-paper\replay_tool_actions.py --output-dir base-paper\results\phase1_tool_bridge_20261018
+```
+
+The command exits nonzero on any mismatch and writes `replay_report.json` plus
+action-level event traces to the separate bridge output directory. The historical
+reference set currently consists of the single unsolved, five-agent sum-mode run
+in `results\experiment_run_20260808_192208`; the mean-mode and solved-round
+coverage in the report is explicitly synthetic. The report records source
+identity, inputs, configuration, execution date, comparisons, and mismatches.
+This replay checks environment transitions for supplied parsed guesses; it does
+not reproduce model responses, prompts, parsing, or the original paper's findings.
+
+Focused environment tests:
+
+```powershell
+conda activate finalsem
+Set-Location base-paper
+python -m unittest discover -s tests -p test_tool_action_environment.py -v
+```
+
 ### Code Structure
 - `experiment.py`: Core game logic and agent implementation
+- `tool_action_environment.py`: Offline `submit_guess` action interface
+- `replay_tool_actions.py`: Saved-trajectory replay and comparison report
 - `run_experiment_multi_model.py`: Large-scale experiment orchestration
 - `llm_run.py`: API client with retry logic
 - `results_visualization.py`: Data analysis and plotting
 - `prompt_capture.py`: LLM prompt logging system
-
 
